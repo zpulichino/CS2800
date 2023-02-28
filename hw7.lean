@@ -151,58 +151,135 @@ def addtail (n m : Nat) : Nat :=
 -- 8 lines
 theorem addtail_succ : forall n m, 
   Nat.succ (addtail n m) = addtail (Nat.succ n) m :=
- by sorry
+ by intro n
+    induction n
+    case zero => intros m; rfl
+    case succ n' IH =>
+      intros m
+      simp only [addtail]
+      rw [IH]
+      rfl
 
 -- 10 lines
 theorem add_eq : forall n m, Nat.add n m = addtail n m := 
- by sorry
+ by intro n
+    induction n
+    case zero => intro m; rfl
+    case succ n IH =>
+      intro m
+      simp only [Nat.add]
+      rw[IH]
+      rw[addtail_succ]
 
 -- 9 lines
 theorem app_associative: ∀ L1 L2 L3 : List Nat, 
     List.append L1 (List.append L2 L3) = 
     List.append (List.append L1 L2) L3 := 
- by sorry
+by intros L1 L2 L3
+   induction L1
+   case nil => rfl
+   case cons head tail IH =>
+    simp only [List.append]
+    rw[IH]
 
 -- 7 lines
 theorem minus_x_x: ∀ x : Nat, Nat.sub x x = 0
 := 
- by sorry
+ by intro x 
+    induction x 
+    case zero => rfl
+    case succ n' IH =>
+      simp only [Nat.sub]
+      rw[IH]
 
 -- 5 lines
 theorem add_n_1 : ∀ x : Nat, Nat.add x 1 = Nat.succ x :=
- by sorry
+ by intro x
+    induction x
+    case zero => rfl
+    case succ x' IH =>
+      simp only [Nat.add]
+      rw[IH]
 
 -- 9 lines
 theorem mult_1_x: ∀ x : Nat, Nat.mul 1 x = x := 
- by sorry
+ by intro x
+    induction x
+    case zero => rfl
+    case succ x' IH =>
+      simp only [Nat.mul]
+      rw[IH]
+      rw[add_n_1]
 
 -- 7 lines
 theorem add_assoc: ∀ x y z : Nat, 
   Nat.add x (Nat.add y z) = Nat.add (Nat.add x y) z := 
- by sorry
+ by intro x y z
+    induction x
+    case zero => rfl
+    case succ x' IH =>
+      simp only [Nat.add]
+      rw[IH]
 
 -- 6 lines
 theorem add_x_Sy : forall x y, 
   Nat.add x (Nat.succ y) = Nat.succ (Nat.add x y) :=
- by sorry
+ by intro x y
+    induction x
+    case zero => rfl
+    case succ n' IH =>
+      simp only [Nat.add]
+      rw[IH]
 
 -- 4 lines
 theorem add_n_0 : forall n, Nat.add n Nat.zero = n :=
- by sorry
+ by intro x
+    induction x
+    case zero => rfl
+    case succ x' IH =>
+      simp only [Nat.mul, Nat.add]
+      rw[IH]
+
+
 
 -- 13 lines
 theorem mult_2_x: ∀ x : Nat, Nat.mul 2 x = Nat.add x x := 
- by sorry
+ by intro x
+    induction x
+    case zero => rfl 
+    case succ x' IH =>
+      simp only [Nat.mul, Nat.add]
+      rw[<- add_n_1]
+      rw[add_x_Sy]
+      rw[<- add_n_1]
+      rw[<-IH]
+      rw[add_n_1]
+      rw[<- add_x_Sy]
+      rfl
 
 -- 10 lines
 theorem length_append : forall (T : Type) (L1 L2 : List T), 
   List.length (List.append L1 L2) = Nat.add (List.length L1) (List.length L2) :=
- by sorry
+ by intro T L1
+    induction L1
+    case nil => intro L2 <;> rfl
+    case cons head tail IH =>
+      intro L2; simp only [List.append, List.length]
+      rw[add_n_1]; rw[add_n_1]
+      rw[IH]
+      rfl
 
 -- 8 lines
 theorem rev_length: ∀ L : List Nat, 
   List.length (List.reverse L) = List.length L := 
- by sorry
+ by intro L
+    induction L
+    case nil => rfl
+    case cons head tail IH =>
+      simp only [List.reverse, List.length]
+      rw[length_append]
+      simp only [List.length, Nat.add]
+      rw[IH]
 
 
 -- Consider the following pair of definitions
@@ -217,7 +294,13 @@ def double : Nat → Nat
 
 -- 5 lines
 theorem even_double: ∀ x : Nat, even (double x) = true := 
- by sorry
+ by intro x
+    induction x
+    case zero => rfl
+    case succ x' IH =>
+      rw[<- IH]
+      simp only [Nat.add]
+      rfl
 
 -- part p3
 end HW7
