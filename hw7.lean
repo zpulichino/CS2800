@@ -99,21 +99,43 @@ theorem p4 : P ∨ Q -> (P -> R) -> (Q -> R) -> R :=
       | inr q => apply Hqr q 
 
 theorem p5 : P ∨ Q -> (P -> R) -> R ∨ Q := 
- by sorry
+ by intros pq Hpr
+    cases pq with
+    | inl P => apply Or.inl (Hpr P)
+    | inr Q => apply Or.inr (Q)
 
 theorem p6 : ¬ Q -> (R -> Q) -> (R ∨ ¬ S) -> S -> False := 
- by sorry
-
+ by intros NotQ RQ RnotS S
+    cases RnotS with
+    | inl R => apply absurd (RQ R) NotQ
+    | inr NotS => apply absurd S NotS
 -- part p1
 
 -- Now, some new proofs
 
 -- part p2
 theorem and_distrib_or: ∀ A B C : Prop, 
-  A ∧ (B ∨ C) ↔ (A ∧ B) ∨ (A ∧ C) := by sorry
+  A ∧ (B ∨ C) ↔ (A ∧ B) ∨ (A ∧ C) :=
+  by intros A B C 
+     apply Iff.intro
+     . intro 
+     | ⟨a, Or.inl b⟩ => apply Or.inl (And.intro a b)
+     | ⟨a, Or.inr c⟩ => apply Or.inr (And.intro a c)
+     . intro
+     | Or.inl ⟨a, b⟩ => apply And.intro a (Or.inl b)
+     | Or.inr ⟨a, c⟩ => apply And.intro a (Or.inr c)
 
 theorem or_distrib_and: ∀ A B C : Prop, 
-  A ∨ (B ∧ C) ↔ (A ∨ B) ∧ (A ∨ C) := by sorry
+  A ∨ (B ∧ C) ↔ (A ∨ B) ∧ (A ∨ C) := 
+  by intros A B C 
+     apply Iff.intro
+     . intro
+       | Or.inl a => apply And.intro (Or.inl a) (Or.inl a)
+       | Or.inr ⟨b, c⟩ => apply And.intro (Or.inr b) (Or.inr c)
+     . intro
+       | ⟨Or.inr b, Or.inr c⟩ => apply Or.inr (And.intro b c)
+       | ⟨Or.inl a, _⟩ => apply Or.inl a
+       | ⟨_, Or.inl a⟩ => apply Or.inl a
 
 -- part p2
 
