@@ -93,7 +93,14 @@ theorem ev_double : forall n, ev (double n) :=
 
 -- 15 lines
 theorem ev_sum : forall n m, ev n -> ev m -> ev (Nat.add n m) := 
- by sorry
+ by intros n m evn evm
+    induction evm 
+    case O => 
+      simp only [Nat.add] 
+      assumption
+    case SS =>
+    apply ev.SS
+    assumption
 
 -- 3 lines
 theorem three_not_ev : Not (ev 3) := 
@@ -108,7 +115,31 @@ inductive ev' : Nat -> Prop :=
 
 -- 21 lines
 theorem ev'_ev : forall n, ev' n <-> ev n := 
- by sorry
+ by intro n
+    constructor
+    case mp =>
+      intros ev'n
+      induction ev'n
+      case O => 
+        apply ev.O 
+      case SSO =>
+        apply ev.SS
+        apply ev.O
+      case sum =>
+      apply ev_sum
+      assumption
+      assumption
+    case mpr =>
+      intros evn
+      induction evn
+      case O => 
+        apply ev'.O
+      case SS =>
+        rw [Nat.succ_eq_add_one]
+        rw [Nat.add_assoc]
+        apply ev'.sum
+        assumption
+        apply ev'.SSO
 
 -- part p2
 
@@ -190,7 +221,7 @@ theorem all_trans : forall (P : T -> Prop) (Q : T -> Prop) L,
  by intros P Q L Hall PtoQ
     induction Hall
     case nil => constructor
-    case cons P x L Px HL =>
+    case cons HL =>
       constructor
       apply PtoQ
       assumption
@@ -201,7 +232,29 @@ theorem insert_le : forall n x l,
   All (Nat.le n) l ->
   Nat.le n x ->
   All (Nat.le n) (insert x l) := 
- by sorry
+ by intros n x l alen nlex 
+    induction alen
+    case nil =>
+      simp only [insert]
+      constructor
+      assumption
+      constructor
+    case cons  =>
+      simp only [insert]
+      generalize hyp : Nat.ble x ‹Nat› = B
+      cases B
+      case false =>
+        simp only [ite_false]
+        constructor
+        assumption
+        assumption
+      case true =>
+        simp only [ite_true]
+        constructor
+        assumption
+        constructor
+        assumption
+        assumption
 
 
 theorem ble_inv : forall a b, 
@@ -220,11 +273,53 @@ theorem ble_inv : forall a b,
 theorem insert_sorted : forall x l, 
   Sorted l ->
   Sorted (insert x l) := 
- by sorry
+ by intros x l sortedl 
+    induction sortedl
+    case nil =>
+      constructor
+      constructor
+      constructor
+    case cons x' l' sortedl' IH1 IH2 =>
+      simp only [insert]
+      generalize Hyp : Nat.ble x x' = B
+      cases B
+      case false =>
+        simp only [ite_false]
+        constructor
+        assumption
+        apply insert_le
+        assumption
+        apply Nat.le_of_ble_eq_true
+        apply ble_inv
+        assumption
+      case true =>
+        simp only [ite_true]
+        constructor
+        constructor
+        assumption
+        assumption
+        constructor
+        apply Nat.le_of_ble_eq_true
+        assumption
+        apply all_trans
+        assumption
+        intros x1 nle
+        induction nle
+        case a.a.a.refl =>
+          apply Nat.le_of_ble_eq_true
+          assumption
+        case a.a.a.step nle2 =>
+          constructor
+          assumption
 
 -- 8 lines
 theorem isort_sorted : forall l, Sorted (isort l) :=
- by sorry
+ by intros l
+    induction l
+    case nil => constructor 
+    case cons ht ln H => rw[isort]
+                         apply insert_sorted
+                         assumption
 
 inductive Permutation : {T : Type} -> List T -> List T -> Prop
 | nil   : Permutation [] []
@@ -247,25 +342,76 @@ example : Permutation [true,true,false] [false,true,true] :=
 -- 6 lines
 theorem perm_refl : forall {T : Type} (l : List T), 
   Permutation l l := 
- by sorry
+ by intros t l 
+    induction l
+    case nil =>
+     apply Permutation.nil
+    case cons x xs ih =>
+    constructor 
+    assumption
 
 -- 10 lines
 theorem perm_length : forall {T : Type} (l1 l2 : List T), 
   Permutation l1 l2 -> l1.length = l2.length :=
- by sorry
+ by intros t l1 l2 Perml1l2
+    induction Perml1l2
+    case nil => constructor
+    case skip p l => 
+      simp
+      assumption
+    case swap => constructor 
+    case trans p1 p2 => 
+      rw [p1]
+      assumption
 
 -- 12 lines
 theorem perm_sym : forall {T : Type} (l1 l2 : List T), 
   Permutation l1 l2 -> Permutation l2 l1 :=
- by sorry
+ by intros t L1 L2 Perm
+    induction Perm
+    case nil =>
+      constructor
+    case skip =>
+      constructor
+      assumption
+    case swap =>
+      constructor
+    case trans =>
+      constructor
+      assumption
+      assumption
 
 -- 18 lines
 theorem insert_perm : forall x l, 
   Permutation (x :: l) (insert x l) :=
- by sorry
+ by intros x l 
+    induction l
+    case nil => simp only[insert]
+                constructor
+                constructor
+    case cons f r ih => simp only [insert]
+                        generalize H : Nat.ble x f = Z
+                        cases Z
+                        case true => simp
+                                     apply perm_refl
+                        case false => simp 
+                                      apply Permutation.trans (l' := (f :: x :: r))
+                                      apply Permutation.swap
+                                      apply Permutation.skip
+                                      assumption
 
 -- 10 lines
 theorem isort_perm : forall l, Permutation l (isort l) :=
- by sorry
+ by intros l
+    induction l
+    case nil => 
+      simp only [isort]
+      constructor
+    case cons h t IH =>
+      constructor
+      apply Permutation.skip
+      assumption
+      simp only [isort]
+      apply insert_perm
 
 -- part p4
