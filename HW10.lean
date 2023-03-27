@@ -128,27 +128,65 @@ inductive sim : Source -> Target -> Prop :=
 -- 7 lines 
 theorem app_star : forall e1 e1' e2, Rstar TStep e1 e1' -> 
                   Rstar TStep (Target.app e1 e2) (Target.app e1' e2) :=
- by sorry
+ by intros e1 e1' e2 rstar
+    induction rstar
+    constructor -- Rstar.refl
+    constructor -- Rstar.step
+    apply TStep.app
+    assumption
+    assumption
 
 -- 7 lines
 theorem plus_star1 : forall e1 e1' e2, Rstar TStep e1 e1' -> 
                   Rstar TStep (Target.plus e1 e2) (Target.plus e1' e2) :=
- by sorry
+ by intros e1 e1' e2 Rstr 
+    induction Rstr
+    case refl =>
+      constructor
+    case step =>
+      constructor
+      apply TStep.plus1
+      assumption
+      assumption
 
 -- 7 lines
 theorem plus_star2 : forall e1 e2 e2', Rstar TStep e2 e2' -> 
                   Rstar TStep (Target.plus e1 e2) (Target.plus e1 e2') :=
- by sorry
+ by intros e1 e1' e2 Rstr 
+    induction Rstr
+    case refl =>
+      constructor
+    case step =>
+      constructor
+      apply TStep.plus2
+      assumption
+      assumption
 
 -- 7 lines
 theorem minus_star1 : forall e1 e1' e2, Rstar TStep e1 e1' -> 
                   Rstar TStep (Target.minus e1 e2) (Target.minus e1' e2) :=
- by sorry
+ by intros e1 e1' e2 Rstr 
+    induction Rstr
+    case refl =>
+      constructor
+    case step =>
+      constructor
+      apply TStep.minus1
+      assumption
+      assumption
 
 -- 7 lines
 theorem minus_star2 : forall e1 e2 e2', Rstar TStep e2 e2' -> 
                   Rstar TStep (Target.minus e1 e2) (Target.minus e1 e2') :=
- by sorry
+ by intros e1 e1' e2 Rstr 
+    induction Rstr
+    case refl =>
+      constructor
+    case step =>
+      constructor
+      apply TStep.minus2
+      assumption
+      assumption
 
 -- part 5
 
@@ -168,7 +206,24 @@ theorem minus_star2 : forall e1 e2 e2', Rstar TStep e2 e2' ->
 -- 15 lines
 theorem compile_sub : forall (e : Source) x (body : Source),
   (e.sub x body).compile = Target.sub e.compile x body.compile :=
- by sorry
+ by intros e x body 
+    induction body <;> simp only [Source.sub, Target.sub, Source.compile]
+    case b a =>
+      cases a <;> constructor  
+    case and s1 s2 H1 H2=>
+      simp
+      constructor
+      repeat assumption
+    case var str1 =>
+      cases (x == str1) <;> constructor
+    case lam str1 s1 IH =>
+      cases (x == str1) <;> simp [Source.compile]
+      rw [IH]
+    case app s1 s2 H1 H2 =>
+      simp
+      constructor
+      rw [H1]
+      rw [H2]
 
 -- part 6
 /- PROBLEM 3: Show that the simulation respects compiler.
@@ -185,7 +240,8 @@ theorem compile_sub : forall (e : Source) x (body : Source),
 -- 1 line
 theorem compile_sim : forall t,
   sim t t.compile := 
- by sorry
+ by intros t
+    constructor
 
 -- part 7
 /- PROBLEM 4: Simulation is preserved over reduction
@@ -226,8 +282,27 @@ theorem step_sim_star : forall t1 t1',
   forall t2,
   sim t1 t2 ->
   exists t2', Rstar TStep t2 t2' /\ sim t1' t2' := 
- by intros t1 t1' rst1
-    induction rst1 <;> intros t2 sim1 <;> sorry
+ by intros t1 t1' rt
+    induction rt <;> intros t2 simt
+    case refl =>
+      exists t2
+      constructor
+      constructor
+      assumption
+    case step a b c stepab  ih1 =>
+      cases (simstep   stepab  simt)
+      case intro w ih2 =>
+        cases ih2 
+        case intro rst2 simb =>
+          cases (ih1 _ simb)
+          case intro w' ih1 =>
+          cases ih1
+          exists w'
+          constructor
+          apply RTrans
+          assumption
+          assumption
+          assumption
 
 
 
@@ -254,6 +329,12 @@ theorem step_sim_star : forall t1 t1',
 -- 7 lines
 theorem correct : forall t b, Rstar SStep t (Source.b b) ->
                               Rstar TStep t.compile ((Source.b b).compile) := 
- by sorry
+ by intros t b rt
+    cases (step_simstar   rt  (compile_sim t))
+    case intro t rt =>
+      cases rt
+      case intro ih1 ih2 =>
+        cases ih2
+        assumption
 
 -- part 10
