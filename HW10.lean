@@ -264,7 +264,97 @@ theorem sim_step : forall t1 t1',
   sim t1 t2 ->
   exists t2', Rstar TStep t2 t2' /\ sim t1' t2' := 
  by intros t1 t1' stept1
-    induction stept1 <;> intros t2 sim1 <;> sorry
+    induction stept1 <;> intros t2 sim1 <;> cases sim1
+    case app e e' a _ H =>
+      simp [Source.compile]
+      cases (H (Source.compile e) (sim.comp e))
+      case intro t H1 =>
+        cases H1 with | intro a' b =>
+        exists (Target.app t (Source.compile a))
+        have H2 : Target.app t (Source.compile a) = (Source.compile (Source.app e' a)) :=
+          by cases b
+             simp [Source.compile]
+        simp [*, app_star, sim.comp]
+        apply app_star
+        cases b
+        assumption
+    case beta xs body x =>
+      simp [Source.compile]
+      exists (Source.compile x).sub xs (Source.compile body)
+      rw [<- compile_sub]
+      simp [*, sim.comp]
+      rw [compile_sub]
+      apply Rstar.step
+      apply TStep.beta
+      apply Rstar.refl
+    case and1.comp s1 s1' s2 _ H2' =>
+      simp [Source.compile]
+      exists (Source.compile (Source.and s1' s2))
+      cases (H2' (Source.compile s1) (sim.comp s1))
+      case intro target1 rsstep =>
+        simp [*, sim.comp]
+        apply minus_star1
+        apply plus_star1
+        cases rsstep
+        case a.a.intro rsstep1 sim' =>
+        cases sim'
+        assumption
+    case and2.comp b e2 e2' _ H3' =>
+      simp [Source.compile]
+      exists (Source.compile (Source.and (Source.b b) e2'))
+      cases (H3' (Source.compile e2) (sim.comp e2))
+      case intro target2 rsstep2 =>
+        simp [*, sim.comp]
+        apply minus_star1
+        apply plus_star2
+        cases rsstep2
+        case a.a.intro rsstep2' sim2' =>
+        cases sim2'
+        assumption
+    case and.comp b1 b2 =>
+      simp [Source.compile]
+      exists (Source.compile (Source.b (b1 && b2)))
+      cases b1 <;> cases b2
+      case false.false =>
+        simp [*, sim.comp]
+        simp only [Source.compile]
+        apply Rstar.step
+        apply TStep.minus1
+        apply TStep.plus
+        apply Rstar.step
+        simp [*]
+        apply TStep.minus
+        apply Rstar.refl
+      case false.true =>
+        simp [*, sim.comp]
+        simp only [Source.compile]
+        apply Rstar.step
+        apply TStep.minus1
+        apply TStep.plus
+        apply Rstar.step
+        simp [*]
+        apply TStep.minus
+        apply Rstar.refl
+      case true.false =>
+        simp [*, sim.comp]
+        simp only [Source.compile]
+        apply Rstar.step
+        apply TStep.minus1
+        apply TStep.plus
+        apply Rstar.step
+        simp [*]
+        apply TStep.minus
+        apply Rstar.refl
+      case true.true =>
+        simp [*, sim.comp]
+        simp only [Source.compile]
+        apply Rstar.step
+        apply TStep.minus1
+        apply TStep.plus
+        apply Rstar.step
+        simp [*]
+        apply TStep.minus
+        apply Rstar.refl
 
 -- part 8
 /- PROBLEM 5: sim_step lifts to many steps.
@@ -289,12 +379,12 @@ theorem step_sim_star : forall t1 t1',
       constructor
       constructor
       assumption
-    case step a b c stepab  ih1 =>
-      cases (simstep   stepab  simt)
+    case step a b c step_ab _ IH1 =>
+      cases (sim_step _ _ step_ab _ simt)
       case intro w ih2 =>
         cases ih2 
         case intro rst2 simb =>
-          cases (ih1 _ simb)
+          cases (IH1 _ simb)
           case intro w' ih1 =>
           cases ih1
           exists w'
@@ -330,7 +420,7 @@ theorem step_sim_star : forall t1 t1',
 theorem correct : forall t b, Rstar SStep t (Source.b b) ->
                               Rstar TStep t.compile ((Source.b b).compile) := 
  by intros t b rt
-    cases (step_simstar   rt  (compile_sim t))
+    cases (step_sim_star _ _ rt _ (compile_sim t))
     case intro t rt =>
       cases rt
       case intro ih1 ih2 =>
