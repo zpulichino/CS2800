@@ -139,15 +139,61 @@ decreasing_by sorry
 -/
 
 -- part 1
-inductive RedBlackTree : Type where
+inductive Color : Type where
+| Red : Color
+| Black : Color
+
+/-
+Checks if the two colors are a valid color pattern for RBT, 
+Only invalid is Red Red, parent child respectively
+The Color order is parent first child next.
+-/
+def Color.RBTcompare : Color -> Color -> Prop
+| Color.Red, Color.Red => false
+| _, _ => true
+
+-- If the color is black return 1 if not return 0
+def Color.plusOneBlack : Color -> Nat
+| Color.Black => 1
+| Color.Red => 0
+
+-- I'll shorten RedBlackTree to RBT
+inductive RedBlackTree : Type where 
 | Leaf : RedBlackTree
 | Node (val : Nat) (Left : RedBlackTree) (Right : RedBlackTree) (c : Color) : RedBlackTree
 
-def RedBlackTree.empty : RedBlackTree := by sorry
+-- returns the color of a leaf or node, leaf is assumed to be black, getter method
+def RedBlackTree.Color :  RedBlackTree -> Color 
+| Leaf => Color.Black
+| Node _ _ _ color => color
 
-def RedBlackTree.insert : RedBlackTree -> Nat -> RedBlackTree := by sorry
+-- checks if the root of the tree is black or a leaf
+def RedBlackTree.BlackRootProp : RedBlackTree -> Prop 
+| Leaf => true
+| Node _ _ _ color => (color.RBTcompare Color.Black) 
 
-def RedBlackTree.delete : RedBlackTree -> Nat -> RedBlackTree := by sorry
+-- checks if the colors are correctly 
+def RedBlackTree.checkColorProp : RedBlackTree -> Prop 
+| Leaf => true
+| Node _ left right color => 
+  (left.Color.RBTcompare color) ∧ 
+  (right.Color.RBTcompare color) ∧
+  left.checkColorProp ∧ 
+  right.checkColorProp 
+
+-- returns the max number of black nodes in any path of the RBT
+def RedBlackTree.maxBlackCount : RedBlackTree -> Nat
+| Leaf => 0
+| Node _ left right Color =>
+  Color.plusOneBlack + (Nat.max left.maxBlackCount right.maxBlackCount)
+
+-- checks if the black property holds.
+def RedBlackTree.checkBlackProp : RedBlackTree -> Prop
+| Leaf => true
+| Node _ left right _ =>
+  (left.maxBlackCount == right.maxBlackCount) ∧
+  left.checkBlackProp ∧ 
+  right.checkBlackProp
 
 -- part 1
 
@@ -169,6 +215,11 @@ about the private inputs.
 
 -- part 2
 def process (private_inputs : List Nat) (public_inputs : List Nat) : Nat := by sorry
+
+theorem no_leak_process : forall public_inputs private_inputs1 private_inputs2,
+   process private_inputs1 public_inputs = process private_inputs2 public_inputs -> 
+   private_inputs1 = private_inputs2 := 
+ by sorry
 
 -- part 2
 
@@ -199,5 +250,9 @@ def give_mortgage : List Nat -- income
                  -> Nat      -- age
                  -> String   -- zipcode
                  -> Bool := by sorry
+
+theorem mortgage_bias : forall (inc: List Nat) (assets : Nat) (zip : String),
+  exists (b : Bool) , forall (race : String) (gender : String) (age : Nat), 
+  give_mortgage inc assets race gender age zip = b := by sorry
 
 -- part 3
